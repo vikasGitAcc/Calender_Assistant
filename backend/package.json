@@ -1,0 +1,19 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "ai assistant that handles calender events",
+  "keywords": [
+    "llm",
+    "ai",
+    "lanchain",
+    "langgraph",
+    "node"
+  ],
+  "license": "ISC",
+  "author": "VIKAS",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
