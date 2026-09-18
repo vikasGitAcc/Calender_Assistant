@@ -6,11 +6,29 @@ export const createEvent = tool(createEventTool, {
 	name: "create-event",
 	description: "tool to create new events in calendar",
 	schema: z.object({
-		title: z.string().min(1),
-		date: z.string().describe("DD:MM:YY 14th Sep 2026"),
-		description: z.string().optional(),
-		timing: z.iso.time(),
-		location: z.string().min(1),
+		title: z.string().min(1).describe("Title of the event. It should be in capitalized format."),
+		description: z.string().optional().describe("description of the event"),
+		location: z
+			.string()
+			.optional()
+			.describe("Geographic location of the event as free-form text."),
+		attendees: z.array(
+			z.object({
+				email: z.email().describe("email of the attendee"),
+				displayName: z
+					.string()
+					.optional()
+					.describe("The attendee's name, if available. Optional."),
+			}),	
+		),
+		start: z.object({
+			dateTime:z.string().describe("The time, as a combined date-time value (formatted according to RFC3339). A time zone offset is required unless a time zone is explicitly specified in timeZone."),
+			timeZone:z.string().describe("Time zone in which the time is specified (Formatted as an IANA Time Zone Database name, e.g. 'Europe/Zurich'.) by default it is IST ('Asia/kolkata') until specifically provided ")
+		}).describe("The starting date and time of the event"),
+		end: z.object({
+			dateTime:z.string().describe("The time, as a combined date-time value (formatted according to RFC3339). A time zone offset is required unless a time zone is explicitly specified in timeZone."),
+			timeZone:z.string().describe("Time zone in which the time is specified (Formatted as an IANA Time Zone Database name, e.g. 'Europe/Zurich'.) by default it is IST ('Asia/kolkata') until specifically provided ")
+		}).describe("The ending date and time of the event")
 	}),
 });
 

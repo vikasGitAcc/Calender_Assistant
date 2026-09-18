@@ -2,7 +2,7 @@ import { END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { model } from "./src/model/llm.model.js";
 import { getEvent, createEvent } from "./src/prepare/calendar.prepare.js";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
-import { HumanMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
 const tools = [getEvent, createEvent]
 
@@ -53,10 +53,14 @@ graph
 
 const app = graph.compile();
 
+console.log("Current Date: ",Date());
+
 (async function main(){
-    const res = await app.invoke({messages: new HumanMessage("Do i have any special meeting in future in year 2026?")})
+    const res = await app.invoke({messages: [new SystemMessage(`You are a helpfull personal assistant for creating and fetching event from the google calendar. cuurent date is ${Date()}`)
+         ,new HumanMessage("create a meeting with sujoy(sujoy@gmail.com) at 7:00 PM to 9:00 PM for tomorrow about backend discussion")]})
 
     console.log((res.messages[res.messages.length-1]).content);
 })()
 
-
+// create a meeting with sujoy(sujoy@gmail.com) at 7:00 PM to 9:00 PM today about backend discussion
+//Do i have an meeting with sujoy
