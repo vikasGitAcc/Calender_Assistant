@@ -54,7 +54,7 @@ graph
 const app = graph.compile();
 
 (async function main(){
-    const res = await app.invoke({messages: new HumanMessage("create a meeting in google calendar with sujoy on 15th sep 2026, meeting goint to held in google meet at 3:00 pm")})
+    const res = await app.invoke({messages: new HumanMessage("Do i have any special meeting in future in year 2026?")})
 
     console.log((res.messages[res.messages.length-1]).content);
 })()
