@@ -1,4 +1,4 @@
-import { END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
+import { END, MemorySaver, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { model } from "./src/model/llm.model.js";
 import { getEvent, createEvent } from "./src/prepare/calendar.prepare.js";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
@@ -7,7 +7,9 @@ import readline from "readline/promises";
 
 const tools = [getEvent, createEvent];
 
-const rl = new readline.Interface({ input: process.stdin, output: process.stdout });
+const checkpointer = new MemorySaver();
+
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
 const LLMWithTools = model.bindTools(tools);
 
@@ -18,7 +20,12 @@ const graph = new StateGraph(MessagesAnnotation);
  */
 
 const assistant = async (state) => {
-	const response = await LLMWithTools.invoke(state.messages);
+	const dateTime = new Date().toLocaleString("se-SE").replace(" ","T");
+	const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	
+	const systemMessage = new SystemMessage(`You are a smart personal assistant. Current date and time: ${dateTime}, Current timezone in IANA timezone: ${timezone}`);
+
+	const response = await LLMWithTools.invoke([systemMessage, ...state.messages]);
 	if (!response) {
 		throw new Error("LLM failed to generate the output");
 	}
@@ -57,26 +64,29 @@ graph
 		tools: "tools",
 	});
 
-const app = graph.compile();
+const app = graph.compile({checkpointer});
 
 (async function main() {
+
+    const config = {configurable:{thread_id:"1"}}
 	while (true) {
 		const question = await rl.question("You: ");
-		if (question == "exit") break;
+		if (question?.trim().toLowerCase() === "exit"){
+            rl.close();
+            break;
+        };
 		const res = await app.invoke({
 			messages: [
-				new SystemMessage(
-					`You are a helpfull personal assistant for creating and fetching event from the google calendar. cuurent date is ${Date()}`,
-				),
+				
 				new HumanMessage(
 					question
 				),
 			],
-		});
+		},config);
 
-		console.log(res.messages[res.messages.length - 1].content);
+		console.log("AI: ",res.messages[res.messages.length - 1].content);
 	}
-	rl.close();
+
 })();
 
 // create a meeting with sujoy(sujoy@gmail.com) at 7:00 PM to 9:00 PM today about backend discussion

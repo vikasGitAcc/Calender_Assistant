@@ -6,3 +6,11 @@
 6. graph setup
 7. graph testing
 8. add tools
+
+Additional features
+
+[] setup google spreadsheet
+   [] create a tool that comunicates with google sheets
+[] update/patch event tool
+[] cancel event tool
+[] contact tool to get the contacts/emails

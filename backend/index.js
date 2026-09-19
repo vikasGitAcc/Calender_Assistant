@@ -4,14 +4,14 @@ import { google } from "googleapis";
 
 const app = express();
 
-export const oauth2Client = new google.auth.OAuth2(
+const oauth2Client = new google.auth.OAuth2(
 	process.env.GOOGLE_CLIENT_ID,
 	process.env.GOOGLE_CLIENT_SECRET,
 	process.env.GOOGLE_REDIRECT_URL,
 );
 
 app.get("/auth", (req, res) => {
-	const scopes = ["https://www.googleapis.com/auth/calendar"];
+	const scopes = ["https://www.googleapis.com/auth/calendar","https://www.googleapis.com/auth/contacts.readonly"];
 	const url = oauth2Client.generateAuthUrl({
 		// 'online' (default) or 'offline' (gets refresh_token)
 		access_type: "offline",
@@ -38,6 +38,6 @@ app.get("/callback", async (req, res) => {
 
 const port = process.env.PORT || 3600;
 
-app.listen(port, () => {
-	console.log(`App is listent on port: http://localhost:${port}`);
-});
+// app.listen(port, () => {
+// 	console.log(`App is listent on port: http://localhost:${port}`);
+// });
