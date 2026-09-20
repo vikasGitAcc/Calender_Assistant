@@ -1,11 +1,12 @@
 import { END, MemorySaver, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { model } from "./src/model/llm.model.js";
-import { getEvent, createEvent } from "./src/prepare/calendar.prepare.js";
+import { getEventTool, createEventTool, deleteEventTool, patchEventTool } from "./src/tools/calendar.tools.js";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import readline from "readline/promises";
+import {getContactsTool} from "./src/tools/people.tools.js"
 
-const tools = [getEvent, createEvent];
+const tools = [getEventTool, createEventTool, getContactsTool, deleteEventTool, patchEventTool];
 
 const checkpointer = new MemorySaver();
 

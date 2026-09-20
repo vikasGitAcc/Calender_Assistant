@@ -1,118 +1,72 @@
-import { google } from "googleapis";
-import tokens from "../../credentials.json" with { type: "json" };
+import { tool } from "@langchain/core/tools";
+import { getEvent, createEvent, deleteEvent, patchEvent} from "../toolFunctions/calendar.toolFunctions.js";
+import z from "zod";
 
-const oauth2Client = new google.auth.OAuth2(
-	process.env.GOOGLE_CLIENT_ID,
-	process.env.GOOGLE_CLIENT_SECRET,
-	process.env.GOOGLE_REDIRECT_URL,
-);
+import {
+	createEventTransparencySchema,
+	createEventVisibilitySchema,
+	createEventRecurrenceSchema,
+	createEventEventTypeSchema,
+	createEventBirthdayPropertiesSchema,
+	createEventAttendeesSchema,
+	createEventLocationSchema,
+	createEventDesciptionSchema,
+	createEventTitleSchema,
+	eventDateSchema,
+} from "../schema/createEvent.schema.js";
 
-oauth2Client.setCredentials({
-	refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+import {
+	getEventTimeMinSchema,
+	getEventTimeMaxSchema,
+	getEventQSchema,
+} from "../schema/getEvent.schema.js";
+import { deleteEventToolSchema } from "../schema/deleteEvent.schema.js";
+import { patchEventToolSchema } from "../schema/patchEvent.schema.js";
+
+/**
+ * create event tool
+ */
+
+export const createEventTool = tool(createEvent, {
+	name: "create-event",
+	description: "tool to create new events in calendar",
+	schema: z.object({
+		title: createEventTitleSchema,
+		description: createEventDesciptionSchema,
+		location: createEventLocationSchema,
+		attendees: createEventAttendeesSchema,
+		birthdayProperties: createEventBirthdayPropertiesSchema,
+		eventType: createEventEventTypeSchema,
+		recurrence: createEventRecurrenceSchema,
+		visibility: createEventVisibilitySchema,
+		transparency: createEventTransparencySchema,
+
+		start: eventDateSchema.describe("Starting date/time of the event"),
+		end: eventDateSchema.describe("Ending date/time of the event"),
+	}),
 });
-const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-export const getEventTool = async ({ timeMin, timeMax, q }) => {
-	console.log("tool calling....");
-	console.log("q: ", q);
-	const calendarEventsList = await calendar.events.list({
-		calendarId: "primary",
-		timeMin,
-		timeMax,
-		q,
-	});
-	console.log("events: ", calendarEventsList.data?.items);
+/**
+ * Get Event tool
+ */
 
-	const events = calendarEventsList.data?.items.map((event) => {
-		return {
-			id: event.id,
-			title: event.summary,
-			description: event.description,
-			organizer: event.organizer.email,
-			start: event.start,
-			end: event.end,
-			location: event.location,
-			attendees: event.attendees,
-			status: event.status,
-			meetingLink: event.hangoutLink,
-		};
-	});
+export const getEventTool = tool(getEvent, {
+	name: "get-event",
+	description: "tool to get events from the calendar",
+	schema: z.object({
+		timeMin: getEventTimeMinSchema,
+		timeMax: getEventTimeMaxSchema,
+		q: getEventQSchema,
+	}),
+});
 
-	return JSON.stringify(events);
-};
 
-export const createEventTool = async ({
-	title,
-	location,
-	description,
-	attendees,
-	start,
-	end,
-	birthdayProperties,
-	eventType,
-	recurrence,
-	visibility,
-	transparency,
-}) => {
-	console.log("Title: ", title);
-	console.log("location: ", location);
-	console.log("attendees: ", attendees);
-	console.log("start: ", start);
-	console.log("end: ", end);
-	console.log("birthdayProperties: ", birthdayProperties);
-	console.log("Event Type: ", eventType);
-	console.log("Recurrence: ", recurrence);
 
-	if (recurrence) {
-		for (const rule of recurrence) {
-			if (!rule.startsWith("RRULE:")) {
-				throw new Error("Invalid recurrence rule");
-			}
-		}
-	}
+/**
+ * delete Event tool
+ */
 
-	const isBirthday = eventType.trim().toLowerCase() === "birthday";
 
-	try {
-		const response = await calendar.events.insert({
-			calendarId: "primary",
-			eventLabelVersion: 1,
-			conferenceDataVersion: isBirthday ? 0 : 1,
-			sendUpdates: "all",
-			requestBody: {
-				end,
-				start,
-				attendees: isBirthday ? [] : attendees,
-				description,
-				summary: title,
-				location,
-				...(isBirthday?{birthdayProperties}:{}),
-				eventType,
-				recurrence,
-				visibility: isBirthday ? "private" : visibility,
-				transparency: isBirthday ? "transparent" : transparency,
-				...(isBirthday
-					? {}
-					: {
-							conferenceData: {
-								createRequest: {
-									requestId: crypto.randomUUID(),
-									conferenceSolutionKey: {
-										type: "hangoutsMeet",
-									},
-								},
-							},
-						}),
-			},
-		});
-		console.log("Response: ", response);
+export const deleteEventTool = tool(deleteEvent, deleteEventToolSchema);  
 
-		if (response?.data?.id) {
-			return "Event added successfully";
-		}
-	} catch (err) {
-		console.log("ERRR: ", err);
-	}
-
-	return "Failed to add event in the calendar";
-};
+export const patchEventTool = tool(patchEvent, patchEventToolSchema);
